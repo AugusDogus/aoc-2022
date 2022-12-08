@@ -11,33 +11,29 @@ const grid = input
 
 const visibleTrees = new Set();
 
-for (let i = 0; i < grid.length; i++) {
-  for (let j = 0; j < grid[i].length; j++) {
-    const currentTree = grid[i][j];
+for (let x = 0; x < grid.length; x++) {
+  for (let y = 0; y < grid[x].length; y++) {
+    const currentTree = grid[x][y];
 
-    const leftTrees: number[] = [];
-    const rightTrees: number[] = [];
+    const surroundingTrees: number[][] = [[], [], [], []];
 
-    const upTrees: number[] = [];
-    const downTrees: number[] = [];
-
-    const outerHorizontal = (!grid[i][j - 1] && grid[i][j - 1] !== 0) || (!grid[i][j + 1] && grid[i][j + 1] !== 0);
-    const outerVertical = !grid[i - 1] || !grid[i + 1];
+    const outerHorizontal = (!grid[x][y - 1] && grid[x][y - 1] !== 0) || (!grid[x][y + 1] && grid[x][y + 1] !== 0);
+    const outerVertical = !grid[x - 1] || !grid[x + 1];
 
     if (outerHorizontal) {
       // This it an outer tree
-      visibleTrees.add(`${i},${j}`);
+      visibleTrees.add(`${x},${y}`);
     } else {
       // This has trees left and right of it
 
       // Loop through the trees on this line
-      for (let k = 0; k < grid[i].length; k++) {
+      for (let k = 0; k < grid[x].length; k++) {
         // If j = k, then this is the same tree
-        if (j !== k) {
-          if (k < j) {
-            leftTrees.push(grid[i][k]);
+        if (y !== k) {
+          if (k < y) {
+            surroundingTrees[0].push(grid[x][k]);
           } else {
-            rightTrees.push(grid[i][k]);
+            surroundingTrees[1].push(grid[x][k]);
           }
         }
       }
@@ -45,35 +41,93 @@ for (let i = 0; i < grid.length; i++) {
 
     if (outerVertical) {
       // This it an outer tree
-      visibleTrees.add(`${i},${j}`);
+      visibleTrees.add(`${x},${y}`);
     } else {
       // This has trees up and down of it
 
       // Loop through the trees on this column
       for (let k = 0; k < grid.length; k++) {
         // If i = k, then this is the same tree
-        if (i !== k) {
-          if (k < i) {
-            upTrees.push(grid[k][j]);
+        if (x !== k) {
+          if (k < x) {
+            surroundingTrees[2].push(grid[k][y]);
           } else {
-            downTrees.push(grid[k][j]);
+            surroundingTrees[3].push(grid[k][y]);
           }
         }
       }
     }
 
-    // Check if there are any trees in the way
-    const leftVisible = currentTree > Math.max(...leftTrees);
-    const rightVisible = currentTree > Math.max(...rightTrees);
-    const upVisible = currentTree > Math.max(...upTrees);
-    const downVisible = currentTree > Math.max(...downTrees);
-
-    const visible = leftVisible || rightVisible || upVisible || downVisible;
-
-    if (visible) {
-      visibleTrees.add(`${i},${j}`);
+    for (let trees of surroundingTrees) {
+      if (currentTree > Math.max(...trees)) {
+        visibleTrees.add(`${x},${y}`);
+      }
     }
   }
 }
 
+// Part 1
 console.log(visibleTrees.size);
+
+const viewDistances: number[] = [];
+for (let y = 0; y < grid.length; ++y) {
+  for (let x = 0; x < grid[y].length; ++x) {
+    const height = grid[y][x];
+    let viewDistance = 1;
+    let multiplier = 0;
+
+    // Find all trees left of this tree
+    for (let i = x - 1; i >= 0; --i) {
+      // Increment the multiplier
+      ++multiplier;
+      // If the height of the tree is less than or equal to the height of the current tree, then it is blocked
+      if (height <= grid[y][i]) {
+        break;
+      }
+    }
+    // Otherwise, add the multiplier to the view distance
+    viewDistance *= multiplier;
+
+    // Reset the multiplier and find all trees right of this tree
+    multiplier = 0;
+    for (let i = x + 1; i < grid[y].length; ++i) {
+      // Increment the multiplier
+      ++multiplier;
+      // If the height of the tree is less than or equal to the height of the current tree, then it is blocked
+      if (height <= grid[y][i]) {
+        break;
+      }
+    }
+    // Otherwise, add the multiplier to the view distance
+    viewDistance *= multiplier;
+
+    // Reset the multiplier and find all trees above this tree
+    // etc...
+    multiplier = 0;
+    for (let j = y - 1; j >= 0; --j) {
+      ++multiplier;
+      if (height <= grid[j][x]) {
+        break;
+      }
+    }
+    viewDistance *= multiplier;
+
+    multiplier = 0;
+    for (let j = y + 1; j < grid.length; ++j) {
+      ++multiplier;
+      if (height <= grid[j][x]) {
+        break;
+      }
+    }
+    viewDistance *= multiplier;
+
+    // Add the view distance to the array
+    viewDistances.push(viewDistance);
+  }
+}
+
+// Find the largest view distance
+const viewDistance = Math.max(...viewDistances);
+
+// Part 2
+console.log(viewDistance);
